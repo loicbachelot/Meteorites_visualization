@@ -11,7 +11,7 @@ app = dash.Dash(external_stylesheets=[dbc.themes.CERULEAN])
 
 server = app.server
 
-df = pd.read_csv('./meteorites.csv').sort_values(by=['year'])
+df = pd.read_csv('data/meteorites.csv').sort_values(by=['year'])
 
 dropdown_opt = [
     {"label": str(name), "value": str(name)}
