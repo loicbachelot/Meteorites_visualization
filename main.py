@@ -26,15 +26,15 @@ app.layout = html.Div(
         html.Div(
             id="header",
             className="jumbotron",
+            style={
+                'padding': '0rem 2rem',
+                'margin-bottom': '0rem',
+            },
             children=[
                 html.H1(children="Meteorites landing"),
                 html.P(
                     id="description",
-                    children="Here I will talk about the datasets I used and stuff like that. "
-                             "Deaths are classified using the International Classification of Diseases, \
-                        Tenth Revision (ICD–10). Drug-poisoning deaths are defined as having ICD–10 underlying \
-                        cause-of-death codes X40–X44 (unintentional), X60–X64 (suicide), X85 (homicide), or Y10–Y14 \
-                        (undetermined intent).",
+                    children="The data are the meteorites landing data coming from the NASA open data:",
                 ),
             ],
         ),
@@ -80,7 +80,7 @@ app.layout = html.Div(
                                                         dbc.Col(
                                                             dbc.FormGroup(
                                                                 children=[
-                                                                    dbc.Label("Select the type of meteorites to display"),
+                                                                    dbc.Label("Select the type of meteorites"),
                                                                     dbc.Checklist(
                                                                         id='seen-found-check',
                                                                         options=[
@@ -93,6 +93,17 @@ app.layout = html.Div(
                                                                 ],
                                                             )
                                                         ),
+                                                        dbc.Col([
+                                                            dbc.Label("Type of map"),
+                                                            dbc.RadioItems(
+                                                                options=[
+                                                                    {"label": "Dark mode", "value": 'dark'},
+                                                                    {"label": "Topographic map", "value": 'stamen-terrain'},
+                                                                ],
+                                                                value='dark',
+                                                                id="type-map",
+                                                            ),
+                                                        ])
                                                     ]),
                                             ]),
                                         dbc.CardBody(
@@ -150,6 +161,16 @@ app.layout = html.Div(
                             ],
                         ),
                     ]),
+                dbc.Row(
+                    dbc.CardBody(
+                        dcc.Graph(
+                            id="year-chart",
+                            config={
+                                'displayModeBar': False
+                            }
+                        ),
+                    ),
+                )
             ])
     ])
 
@@ -182,14 +203,28 @@ def get_by_climate(years, fall):
     return df_climate
 
 
+def get_by_years(years, fall):
+    df_years = get_filtered_df(years, fall)
+    df_years = df_years.groupby(['year', 'fall'])['name'].count().reset_index()
+    df_years.rename(columns={"name": "count"}, inplace=True)
+    df_years.sort_values(by='year', inplace=True)
+    return df_years
+
+
 @app.callback(
     dash.dependencies.Output('graph-map', 'figure'),
     [dash.dependencies.Input('year-range-slider', 'value'),
-     dash.dependencies.Input('seen-found-check', 'value')],
+     dash.dependencies.Input('seen-found-check', 'value'),
+     dash.dependencies.Input('type-map', 'value')],
     [dash.dependencies.State('graph-map', "relayoutData")]
 )
-def update_graph(years, fall, graph_layout):
+def update_graph(years, fall, map_style, graph_layout):
     df_filter = get_filtered_df(years, fall)
+
+    if map_style == 'dark':
+        marker_color = 'rgb(206, 118, 100)'
+    else:
+        marker_color = 'rgba(99, 110, 250, 100)'
 
     trace = [
         dict(
@@ -201,7 +236,7 @@ def update_graph(years, fall, graph_layout):
             mode='markers',
             marker=dict(
                 size=5,
-                color='rgb(206, 118, 100)',
+                color=marker_color,
                 opacity=0.4),
         )
     ]
@@ -226,7 +261,7 @@ def update_graph(years, fall, graph_layout):
                 lon=lon,
             ),
             zoom=zoom,
-            style='dark',
+            style=map_style,
         ),
     )
     fig = dict(data=trace, layout=layout)
@@ -281,20 +316,84 @@ def display_barchart(chart_dropdown, years, fall, graph_input):
         )
 
     layout = dict(
-        margin=dict(r=5, l=30, t=0),
+        margin=dict(r=0, l=30, t=0),
         paper_bgcolor='rgba(0, 0, 0, 100)',
         plot_bgcolor='rgba(0, 0, 0, 100)',
         yaxis=dict(
             type=yaxis_type,
-            tickfont=dict(color='white')
+            tickfont=dict(color='white'),
         ),
         xaxis=dict(
-            tickfont=dict(color='white')
+            tickfont=dict(color='white'),
+        ),
+        legend_title_text='Type of meteorites',
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01,
+            font=dict(
+                color="white"
+            ),
         )
     )
 
     fig = dict(data=trace, layout=layout)
     return fig
+
+
+@app.callback(
+    dash.dependencies.Output("year-chart", "figure"),
+    [dash.dependencies.Input("year-range-slider", "value"),
+     dash.dependencies.Input('seen-found-check', 'value')],
+)
+def display_year_chart(years, fall):
+    df_years = get_by_years(years, fall)
+    trace = []
+    for i in fall:
+        trace.append(
+            dict(
+                type='scatter',
+                mode='lines',
+                x=df_years[df_years['fall'] == i]['year'],
+                y=df_years[df_years['fall'] == i]["count"],
+                name=i,
+            )
+        )
+
+    layout = dict(
+        height=180,
+        margin=dict(r=5, l=35, t=0, b=20),
+        paper_bgcolor='rgba(0, 0, 0, 100)',
+        plot_bgcolor='rgba(0, 0, 0, 100)',
+        automargin=True,
+        yaxis=dict(
+            tickfont=dict(color='white')
+        ),
+        xaxis=dict(
+            tickfont=dict(color='white'),
+        ),
+        legend_title_text='Type of meteorites',
+        legend=dict(
+            font=dict(
+                color="white"
+            ),
+        ),
+    )
+
+    fig = dict(data=trace, layout=layout)
+    return fig
+
+
+@app.callback(
+    dash.dependencies.Output("year-range-slider", "value"),
+    [dash.dependencies.Input("year-chart", "selectedData")],
+)
+def update_slider(selected_dates):
+    if selected_dates is None:
+        return [df['year'].min(), df['year'].max()]
+    nums = [int(point["pointNumber"]) for point in selected_dates["points"]]
+    return [min(nums) + df['year'].min(), max(nums) + df['year'].min()]
 
 
 if __name__ == '__main__':
