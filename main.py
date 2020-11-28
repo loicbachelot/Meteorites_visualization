@@ -28,7 +28,7 @@ app.layout = html.Div(
             className="jumbotron",
             style={
                 'padding': '0rem 2rem',
-                'margin-bottom': '0rem',
+                'marginBottom': '0rem',
             },
             children=[
                 html.H1(children="Meteorites landing"),
@@ -71,7 +71,7 @@ app.layout = html.Div(
                                                                         )
                                                                     ),
                                                                     dbc.Label(
-                                                                        "Drag the slider to select the years to display",
+                                                                        "Filter by discovery year (or select range on the Landing/Year graph)",
                                                                         html_for='year-range-slider'),
                                                                 ]),
                                                         ],
@@ -109,6 +109,7 @@ app.layout = html.Div(
                                         dbc.CardBody(
                                             dcc.Graph(
                                                 id='graph-map',
+                                                style={'height': '50vh'}
                                             )
                                         )
                                     ]
@@ -154,6 +155,7 @@ app.layout = html.Div(
                                         dbc.CardBody(
                                             dcc.Graph(
                                                 id="barchart",
+                                                style={'height': '50vh'}
                                             ),
                                         ),
                                     ]),
@@ -162,12 +164,19 @@ app.layout = html.Div(
                         ),
                     ]),
                 dbc.Row(
-                    dbc.CardBody(
-                        dcc.Graph(
-                            id="year-chart",
-                            config={
-                                'displayModeBar': False
+                    dbc.Col(
+                        dbc.Card(
+                            dcc.Graph(
+                                id="year-chart",
+                                config={
+                                    'displayModeBar': False
+                                }
+                            ),
+                            body=True,
+                            style={
+                                'marginTop': '5px'
                             }
+
                         ),
                     ),
                 )
@@ -269,20 +278,6 @@ def update_graph(years, fall, map_style, graph_layout):
 
 
 @app.callback(
-    dash.dependencies.Output('output-container-test', 'children'),
-    [dash.dependencies.Input('graph-map', 'layoutparam')]
-)
-def update_output(graph_layout):
-    lat = lon = zoom = 0
-    if graph_layout is not None:
-        if "mapbox.center" in graph_layout.keys():
-            lon = float(graph_layout["mapbox.center"]["lon"])
-            lat = float(graph_layout["mapbox.center"]["lat"])
-            zoom = float(graph_layout["mapbox.zoom"])
-    return 'the actual parameters of the map are: lat ' + str(lat) + ' lon ' + str(lon) + ' zoom ' + str(zoom)
-
-
-@app.callback(
     dash.dependencies.Output("barchart", "figure"),
     [dash.dependencies.Input("chart-dropdown", "value"),
      dash.dependencies.Input("year-range-slider", "value"),
@@ -379,6 +374,16 @@ def display_year_chart(years, fall):
                 color="white"
             ),
         ),
+        title=dict(
+            text="Landing/year",
+            y=0.9,
+            x=0.5,
+            xanchor='center',
+            yanchor='center',
+            font=dict(
+                color="white"
+            ),
+        )
     )
 
     fig = dict(data=trace, layout=layout)
@@ -387,13 +392,13 @@ def display_year_chart(years, fall):
 
 @app.callback(
     dash.dependencies.Output("year-range-slider", "value"),
-    [dash.dependencies.Input("year-chart", "selectedData")],
+    [dash.dependencies.Input("year-chart", "relayoutData")],
 )
-def update_slider(selected_dates):
-    if selected_dates is None:
-        return [df['year'].min(), df['year'].max()]
-    nums = [int(point["pointNumber"]) for point in selected_dates["points"]]
-    return [min(nums) + df['year'].min(), max(nums) + df['year'].min()]
+def update_slider(layout):
+    if layout is not None:
+        if 'xaxis.range[0]' in layout:
+            return [int(layout['xaxis.range[0]']), int(layout['xaxis.range[1]']) + 1]
+    return [df['year'].min(), df['year'].max()]
 
 
 if __name__ == '__main__':
