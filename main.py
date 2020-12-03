@@ -15,28 +15,52 @@ df = pd.read_csv('data/meteorites.csv').sort_values(by=['year'])
 
 dropdown_opt = [
     {"label": str(name), "value": str(name)}
-    for name in ['Country', 'Population', 'Area (km sq)',
-                 'Pop. Density (per sq. km.)', 'GDP ($ per capita)', 'Climate', 'Region',
-                 'fall', 'count']
+    for name in ['Country', 'Population', 'Area (km sq)', 'Pop. Density (per sq. km.)',
+                 'GDP ($ per capita)', 'Climate', 'Region']
 ]
 
 app.layout = html.Div(
     id="root",
     children=[
-        html.Div(
-            id="header",
-            className="jumbotron",
-            style={
-                'padding': '0rem 2rem',
-                'marginBottom': '0rem',
-            },
-            children=[
-                html.H1(children="Meteorites landing"),
-                html.P(
-                    id="description",
-                    children="The data are the meteorites landing data coming from the NASA open data:",
+        dbc.Navbar(
+            [
+                dbc.Col(
+                    html.H1("Meteorites Landing", style={
+                        'textAlign': 'center',
+                        'color': 'white'
+                    })
                 ),
+                dbc.Row(
+                    [
+                        dbc.Col([
+                            dbc.Button("Data info", id='about', color="primary", className="ml-2"),
+                            dbc.Popover(
+                                [
+                                    dbc.PopoverHeader("About the data"),
+                                    dbc.PopoverBody(
+                                        "The data used are coming from 2 different datasets:"
+                                        "- Meteorites landing data from Nasa"
+                                        "- Countries data coming from a kaggle dataset \"Countries of the world\" compiling data from The Wold Factbook by the Central Intelligence Agency."
+                                    ),
+                                ],
+                                id="popover",
+                                is_open=False,
+                                target="about",
+                                placement='bottom'
+                            )],
+                            width="auto",
+                        ),
+                    ],
+                    no_gutters=True,
+                    className="ml-auto flex-nowrap mt-3 mt-md-0",
+                    align="center",
+                )
             ],
+            color="dark",
+            dark=True,
+            style={
+                'marginBottom': '1rem',
+            }
         ),
         dbc.Container(
             id="app-container",
@@ -132,7 +156,8 @@ app.layout = html.Div(
                                                                 options=[
                                                                     {"label": "Log scale Y axis",
                                                                      "value": 'log'},
-                                                                    # {"label": "Option 2", "value": 2},
+                                                                    {"label": "Density (Count/Area in km/sq)",
+                                                                     "value": 'density'},
                                                                 ],
                                                                 value=[],
                                                                 id="graph-input",
@@ -170,7 +195,8 @@ app.layout = html.Div(
                                 id="year-chart",
                                 config={
                                     'displayModeBar': False
-                                }
+                                },
+                                style={'height': '14vh'}
                             ),
                             body=True,
                             style={
@@ -201,15 +227,16 @@ def get_by_country(years, fall):
     df_by_country.rename(columns={"fall": 'count'}, inplace=True)
     df_by_country = df_by_country.reset_index()
     df_by_country.sort_values(by='count', inplace=True)
+    df_by_country['density'] = df_by_country['count']/df_by_country['Area (km sq)']
     return df_by_country
 
 
-def get_by_climate(years, fall):
-    df_climate = get_by_country(years, fall).groupby(['Climate'])[['count', 'Area (km sq)']].sum().reset_index()
-    df_climate.rename(columns={"name": "count"}, inplace=True)
-    df_climate.sort_values(by='count', inplace=True)
-    df_climate['density'] = df_climate['count'] / df_climate['Area (km sq)']
-    return df_climate
+def get_by_other(years, fall, xaxis):
+    df_other = get_by_country(years, fall).groupby([xaxis, 'fall'])[['count', 'Area (km sq)']].sum().reset_index()
+    df_other.rename(columns={"name": "count"}, inplace=True)
+    df_other.sort_values(by='count', inplace=True)
+    df_other['density'] = df_other['count'] / df_other['Area (km sq)']
+    return df_other
 
 
 def get_by_years(years, fall):
@@ -285,12 +312,16 @@ def update_graph(years, fall, map_style, graph_layout):
      dash.dependencies.Input('graph-input', 'value')],
 )
 def display_barchart(chart_dropdown, years, fall, graph_input):
-    df_country = get_by_country(years, fall)
     if chart_dropdown in ['Population', 'Area (km sq)',
                           'Pop. Density (per sq. km.)', 'GDP ($ per capita)']:
+        df_display = get_by_country(years, fall)
         type_graph = 'scatter'
         mode_graph = 'markers'
     else:
+        if chart_dropdown == 'Country':
+            df_display = get_by_country(years, fall)
+        else:
+            df_display = get_by_other(years, fall, chart_dropdown)
         type_graph = 'bar'
         mode_graph = 'none'
 
@@ -298,14 +329,19 @@ def display_barchart(chart_dropdown, years, fall, graph_input):
     if 'log' in graph_input:
         yaxis_type = 'log'
 
+    if 'density' in graph_input:
+        type_data = "density"
+    else:
+        type_data = 'count'
+
     trace = []
     for i in fall:
         trace.append(
             dict(
                 type=type_graph,
                 mode=mode_graph,
-                x=df_country[df_country['fall'] == i][chart_dropdown],
-                y=df_country[df_country['fall'] == i]["count"],
+                x=df_display[df_display['fall'] == i][chart_dropdown],
+                y=df_display[df_display['fall'] == i][type_data],
                 name=i,
             )
         )
@@ -357,7 +393,6 @@ def display_year_chart(years, fall):
         )
 
     layout = dict(
-        height=180,
         margin=dict(r=5, l=35, t=0, b=20),
         paper_bgcolor='rgba(0, 0, 0, 100)',
         plot_bgcolor='rgba(0, 0, 0, 100)',
@@ -399,6 +434,17 @@ def update_slider(layout):
         if 'xaxis.range[0]' in layout:
             return [int(layout['xaxis.range[0]']), int(layout['xaxis.range[1]']) + 1]
     return [df['year'].min(), df['year'].max()]
+
+
+@app.callback(
+    dash.dependencies.Output("popover", "is_open"),
+    [dash.dependencies.Input("about", "n_clicks")],
+    [dash.dependencies.State("popover", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
 
 if __name__ == '__main__':
