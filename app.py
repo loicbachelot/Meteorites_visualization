@@ -83,7 +83,7 @@ app.layout = html.Div(
                                                     html.Tr([html.Td('Population'), html.Td('Number of inhabitants'), html.Td('Number')]),
                                                     html.Tr([html.Td('Area (km sq)'), html.Td('Area in km square'), html.Td('Number')]),
                                                     html.Tr([html.Td('Pop. Density'), html.Td('Population density in Pop./km sq (Population/Area)'), html.Td('Number')]),
-                                                    html.Tr([html.Td('GPD ($ per capita'), html.Td('Gross Domestic Product/ Population, useful to see how rich a country is.'), html.Td('Number')]),
+                                                    html.Tr([html.Td('GPD ($ per capita)'), html.Td('Gross Domestic Product/ Population, useful to see how rich a country is.'), html.Td('Number')]),
                                                     html.Tr([html.Td('Climate'), html.Td('Climate type in: Desert(ice or sand), Desert/Tropical, Tropical, Tropical/Temperate, Temperate, Other'), html.Td('Text')]),
                                                 ])
                                             ],
