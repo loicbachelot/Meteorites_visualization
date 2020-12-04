@@ -5,7 +5,7 @@ import dash_html_components as html
 import pandas as pd
 
 mapbox_access_token = "pk.eyJ1IjoibG9pY2JhY2hlbG90IiwiYSI6ImNraGc0bmdnOTBveWoyeW80ZDU1Z2EzY2kifQ.mOX2igWQn0uH5HJusetcqA"
-mapbox_style = "dark"  # "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
+mapbox_style = "dark"
 
 app = dash.Dash(external_stylesheets=[dbc.themes.CERULEAN])
 
@@ -502,4 +502,4 @@ def toggle_modal(n1, n2, is_open):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
