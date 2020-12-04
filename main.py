@@ -34,19 +34,72 @@ app.layout = html.Div(
                     [
                         dbc.Col([
                             dbc.Button("Data info", id='about', color="primary", className="ml-2"),
-                            dbc.Popover(
+                            dbc.Modal(
                                 [
-                                    dbc.PopoverHeader("About the data"),
-                                    dbc.PopoverBody(
-                                        "The data used are coming from 2 different datasets:"
-                                        "- Meteorites landing data from Nasa"
-                                        "- Countries data coming from a kaggle dataset \"Countries of the world\" compiling data from The Wold Factbook by the Central Intelligence Agency."
+                                    dbc.ModalHeader("About the data"),
+                                    dbc.ModalBody([
+                                        html.P("The data are coming from two different datasets. One dataset containing the meteorites information and another containing the countries information."),
+                                        html.H3("Meteorites landing data"),
+                                        html.A("Link to the dataset", href='https://data.nasa.gov/Space-Science/Meteorite-Landings/gh4g-9sfh', target="_blank"),
+                                        html.P("It contains 45.7k rows and 10 columns as follow: "),
+                                        dbc.Table(
+                                            id='meteorites-dataset',
+                                            children=[
+                                                html.Thead(html.Tr([html.Th("Column name"), html.Th("Description"), html.Th("Type")])),
+                                                html.Tbody([
+                                                    html.Tr([html.Td('name'), html.Td('Name giver to the meteorite'), html.Td('Text')]),
+                                                    html.Tr([html.Td('id'), html.Td('Unique identification number of the meteorite'), html.Td('Text')]),
+                                                    html.Tr([html.Td('nametype'), html.Td('Valid: Typical meteorite / Relict: very old, highly degraded'), html.Td('Text')]),
+                                                    html.Tr([html.Td('recclass'),
+                                                             html.Td([html.A('Class of the meteorite', href='https://en.wikipedia.org/wiki/Meteorite_classification', target="_blank")]),
+                                                             html.Td('Text')]),
+                                                    html.Tr([html.Td('Mass (g)'), html.Td('Mass in gram'), html.Td('Number')]),
+                                                    html.Tr([html.Td('fall'), html.Td('Fell: meteorite observed falling / Fall: meteorite found after, not observed'), html.Td('Text')]),
+                                                    html.Tr([html.Td('year'), html.Td('Year the meteorite fell or has been discovered depending on the field “fall”'), html.Td('Datetime')]),
+                                                    html.Tr([html.Td('reclat'), html.Td('Latitude of the landing'), html.Td('Number')]),
+                                                    html.Tr([html.Td('reclong'), html.Td('Longitde of the landing'), html.Td('Number')]),
+                                                    html.Tr([html.Td('GeoLocation'), html.Td('Coordinates of the landing “(reclat, reclong)”'), html.Td('Tuple')]),
+                                                ])
+                                            ],
+                                            bordered=True,
+                                            dark=True,
+                                            hover=True,
+                                            responsive=True,
+                                            striped=True,
+                                        ),
+                                        html.H3("Country data"),
+                                        html.A("Link to the dataset", href='https://www.kaggle.com/fernandol/countries-of-the-world', target="_blank"),
+                                        html.P(
+                                            "It is extracted from The World Factbook, Central Intelligence Agency , compiling data from all countries. It is composed of 227 rows, and I filtered only 7 columns as follow:"),
+                                        dbc.Table(
+                                            id='country-dataset',
+                                            children=[
+                                                html.Thead(html.Tr([html.Th("Column name"), html.Th("Description"), html.Th("Type")])),
+                                                html.Tbody([
+                                                    html.Tr([html.Td('Country'), html.Td('Name of the country'), html.Td('Text')]),
+                                                    html.Tr([html.Td('Region'), html.Td(
+                                                        'Region name in: Baltics, eastern europe, western europe, asia (ex. near east), c.w. of ind. States, oceania, northern america, latin amer. & carib, northern africa, near east, sub-saharan africa, antarctica'),
+                                                             html.Td('Text')]),
+                                                    html.Tr([html.Td('Population'), html.Td('Number of inhabitants'), html.Td('Number')]),
+                                                    html.Tr([html.Td('Area (km sq)'), html.Td('Area in km square'), html.Td('Number')]),
+                                                    html.Tr([html.Td('Pop. Density'), html.Td('Population density in Pop./km sq (Population/Area)'), html.Td('Number')]),
+                                                    html.Tr([html.Td('GPD ($ per capita'), html.Td('Gross Domestic Product/ Population, useful to see how rich a country is.'), html.Td('Number')]),
+                                                    html.Tr([html.Td('Climate'), html.Td('Climate type in: Desert(ice or sand), Desert/Tropical, Tropical, Tropical/Temperate, Temperate, Other'), html.Td('Text')]),
+                                                ])
+                                            ],
+                                            bordered=True,
+                                            dark=True,
+                                            hover=True,
+                                            responsive=True,
+                                            striped=True,
+                                        )
+                                    ]),
+                                    dbc.ModalFooter(
+                                        dbc.Button("Close", id="close-modal", className="ml-2")
                                     ),
                                 ],
-                                id="popover",
-                                is_open=False,
-                                target="about",
-                                placement='bottom'
+                                id="modal",
+                                size='xl',
                             )],
                             width="auto",
                         ),
@@ -227,7 +280,7 @@ def get_by_country(years, fall):
     df_by_country.rename(columns={"fall": 'count'}, inplace=True)
     df_by_country = df_by_country.reset_index()
     df_by_country.sort_values(by='count', inplace=True)
-    df_by_country['density'] = df_by_country['count']/df_by_country['Area (km sq)']
+    df_by_country['density'] = df_by_country['count'] / df_by_country['Area (km sq)']
     return df_by_country
 
 
@@ -437,12 +490,13 @@ def update_slider(layout):
 
 
 @app.callback(
-    dash.dependencies.Output("popover", "is_open"),
-    [dash.dependencies.Input("about", "n_clicks")],
-    [dash.dependencies.State("popover", "is_open")],
+    dash.dependencies.Output("modal", "is_open"),
+    [dash.dependencies.Input("about", "n_clicks"),
+     dash.dependencies.Input("close-modal", "n_clicks")],
+    [dash.dependencies.State("modal", "is_open")],
 )
-def toggle_popover(n, is_open):
-    if n:
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
         return not is_open
     return is_open
 
