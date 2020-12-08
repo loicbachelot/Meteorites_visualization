@@ -504,7 +504,18 @@ def display_year_chart(years, fall):
             font=dict(
                 color="white"
             ),
-        )
+        ),
+        annotations=[
+            dict(
+                x=0.05,
+                y=0.95,
+                showarrow=False,
+                text="Select the period directly on the graph, double click to reset",
+                xref="paper",
+                yref="paper",
+                borderwidth=0
+            ),
+        ]
     )
 
     fig = dict(data=trace, layout=layout)
