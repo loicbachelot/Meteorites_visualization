@@ -7,4 +7,4 @@ In this repos you will find the notebooks I used for the visualization and the d
 
 The dashboard is deployed here: https://meteorite-lb.herokuapp.com/ 
 
-![](images/dashboard.PNG)
+![](images/dashboard.png)
