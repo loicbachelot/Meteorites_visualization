@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+import numpy as np
 import pandas as pd
 
 mapbox_access_token = "pk.eyJ1IjoibG9pY2JhY2hlbG90IiwiYSI6ImNraGc0bmdnOTBveWoyeW80ZDU1Z2EzY2kifQ.mOX2igWQn0uH5HJusetcqA"
@@ -70,7 +71,7 @@ app.layout = html.Div(
                                         html.P("The data are coming from two different datasets. One dataset containing the meteorites information and another containing the countries information."),
                                         html.H3("Meteorites landing data"),
                                         html.A("Link to the dataset", href='https://data.nasa.gov/Space-Science/Meteorite-Landings/gh4g-9sfh', target="_blank"),
-                                        html.P("It contains 45.7k rows and 10 columns as follow: "),
+                                        html.P("The data are coming from the NASA open data, and gather information on the meteorites landing discovered between 1688 and 2013. It contains 45.7k rows and 10 columns as follow: "),
                                         dbc.Table(
                                             id='meteorites-dataset',
                                             children=[
@@ -83,7 +84,7 @@ app.layout = html.Div(
                                                              html.Td([html.A('Class of the meteorite', href='https://en.wikipedia.org/wiki/Meteorite_classification', target="_blank")]),
                                                              html.Td('Text')]),
                                                     html.Tr([html.Td('Mass (g)'), html.Td('Mass in gram'), html.Td('Number')]),
-                                                    html.Tr([html.Td('fall'), html.Td('Fell: meteorite observed falling / Found: meteorite found after, not observed'), html.Td('Text')]),
+                                                    html.Tr([html.Td('fall'), html.Td('Fell: meteorite observed falling, "seen" / Found: meteorite found after, not observed'), html.Td('Text')]),
                                                     html.Tr([html.Td('year'), html.Td('Year the meteorite fell or has been discovered depending on the field “fall”'), html.Td('Datetime')]),
                                                     html.Tr([html.Td('reclat'), html.Td('Latitude of the landing'), html.Td('Number')]),
                                                     html.Tr([html.Td('reclong'), html.Td('Longitde of the landing'), html.Td('Number')]),
@@ -191,7 +192,7 @@ app.layout = html.Div(
                                                                         id='seen-found-check',
                                                                         options=[
                                                                             {'label': 'Found', 'value': 'Found'},
-                                                                            {'label': 'Seen', 'value': 'Fell'},
+                                                                            {'label': 'Fell (seen falling)', 'value': 'Fell'},
                                                                         ],
                                                                         value=['Found', 'Fell'],
                                                                         inline=False,
@@ -246,7 +247,7 @@ app.layout = html.Div(
                                                                 switch=True,
                                                             )]),
                                                         dbc.Col([
-                                                            html.P(id="chart-selector", children="Select x:"),
+                                                            html.P(id="chart-selector", children="Visualize by:"),
                                                             dcc.Dropdown(
                                                                 options=dropdown_opt,
                                                                 value="Country",
@@ -349,8 +350,11 @@ def update_graph(years, fall, map_style, graph_layout):
             type="scattermapbox",
             lat=df_filter.reclat,
             lon=df_filter.reclong,
-            text=df_filter.year,
-            hoverinfo='text',
+            customdata=np.stack((df_filter["name"], df_filter["year"], df_filter["mass (g)"], df_filter['fall']), axis=-1),
+            hovertemplate='<b>Name:%{customdata[0]}</b>'
+                          '<br>Year:%{customdata[1]}'
+                          '<br>Mass (g): %{customdata[2]:.1f}'
+                          '<br>Founf/Fell: %{customdata[3]}<extra></extra>',
             mode='markers',
             marker=dict(
                 size=5,
@@ -429,7 +433,7 @@ def display_barchart(chart_dropdown, years, fall, graph_input):
         )
 
     layout = dict(
-        margin=dict(r=0, l=30, t=0),
+        margin=dict(r=5, l=30, t=0),
         paper_bgcolor='rgba(0, 0, 0, 100)',
         plot_bgcolor='rgba(0, 0, 0, 100)',
         yaxis=dict(
