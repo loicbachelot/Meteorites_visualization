@@ -54,7 +54,7 @@ app.layout = html.Div(
                                                              html.Td([html.A('Class of the meteorite', href='https://en.wikipedia.org/wiki/Meteorite_classification', target="_blank")]),
                                                              html.Td('Text')]),
                                                     html.Tr([html.Td('Mass (g)'), html.Td('Mass in gram'), html.Td('Number')]),
-                                                    html.Tr([html.Td('fall'), html.Td('Fell: meteorite observed falling / Fall: meteorite found after, not observed'), html.Td('Text')]),
+                                                    html.Tr([html.Td('fall'), html.Td('Fell: meteorite observed falling / Found: meteorite found after, not observed'), html.Td('Text')]),
                                                     html.Tr([html.Td('year'), html.Td('Year the meteorite fell or has been discovered depending on the field “fall”'), html.Td('Datetime')]),
                                                     html.Tr([html.Td('reclat'), html.Td('Latitude of the landing'), html.Td('Number')]),
                                                     html.Tr([html.Td('reclong'), html.Td('Longitde of the landing'), html.Td('Number')]),
