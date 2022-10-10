@@ -5,13 +5,14 @@ import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 import pandas as pd
-from boto.s3.connection import S3Connection
 
 try:
-    mapbox_access_token = S3Connection(os.environ['mapbox_access_token'])
+    mapbox_access_token = os.environ['mapbox_access_token']
 except:
     with open('token_mapbox.json', 'r') as f:
+        print("unable to get key from heroku")
         mapbox_access_token = json.load(f)['mapbox']
+
 
 mapbox_style = "dark"
 
