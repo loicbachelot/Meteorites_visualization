@@ -1,10 +1,18 @@
+import json
+import os
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 import pandas as pd
+from boto.s3.connection import S3Connection
 
-mapbox_access_token = "pk.eyJ1IjoibG9pY2JhY2hlbG90IiwiYSI6ImNraGc0bmdnOTBveWoyeW80ZDU1Z2EzY2kifQ.mOX2igWQn0uH5HJusetcqA"
+try:
+    mapbox_access_token = S3Connection(os.environ['mapbox_access_token'])
+except:
+    with open('token_mapbox.json', 'r') as f:
+        mapbox_access_token = json.load(f)['mapbox']
+
 mapbox_style = "dark"
 
 app = dash.Dash(external_stylesheets=[dbc.themes.CERULEAN])
@@ -28,86 +36,126 @@ app.layout = html.Div(
                     html.H1("Meteorites Landing", style={
                         'textAlign': 'center',
                         'color': 'white'
-                    })
+                    }),
+                    width={"size": 8, "offset": 2}
                 ),
-                dbc.Row(
-                    [
-                        dbc.Col([
-                            dbc.Button("Data info", id='about', color="primary", className="ml-2"),
-                            dbc.Modal(
-                                [
-                                    dbc.ModalHeader("About the data"),
-                                    dbc.ModalBody([
-                                        html.P("The data are coming from two different datasets. One dataset containing the meteorites information and another containing the countries information."),
-                                        html.H3("Meteorites landing data"),
-                                        html.A("Link to the dataset", href='https://data.nasa.gov/Space-Science/Meteorite-Landings/gh4g-9sfh', target="_blank"),
-                                        html.P("It contains 45.7k rows and 10 columns as follow: "),
-                                        dbc.Table(
-                                            id='meteorites-dataset',
-                                            children=[
-                                                html.Thead(html.Tr([html.Th("Column name"), html.Th("Description"), html.Th("Type")])),
-                                                html.Tbody([
-                                                    html.Tr([html.Td('name'), html.Td('Name giver to the meteorite'), html.Td('Text')]),
-                                                    html.Tr([html.Td('id'), html.Td('Unique identification number of the meteorite'), html.Td('Text')]),
-                                                    html.Tr([html.Td('nametype'), html.Td('Valid: Typical meteorite / Relict: very old, highly degraded'), html.Td('Text')]),
-                                                    html.Tr([html.Td('recclass'),
-                                                             html.Td([html.A('Class of the meteorite', href='https://en.wikipedia.org/wiki/Meteorite_classification', target="_blank")]),
+                dbc.Col(
+                    dbc.Row(
+                        [
+                            dbc.Col([
+                                dbc.Button("Data info", id='about', color="primary", className="ml-2"),
+                                dbc.Modal(
+                                    [
+                                        dbc.ModalHeader("About the data"),
+                                        dbc.ModalBody([
+                                            html.P(
+                                                "The data are coming from two different datasets. One dataset containing the meteorites information and another containing the countries information."),
+                                            html.H3("Meteorites landing data"),
+                                            html.A("Link to the dataset",
+                                                   href='https://data.nasa.gov/Space-Science/Meteorite-Landings/gh4g-9sfh',
+                                                   target="_blank"),
+                                            html.P("It contains 45.7k rows and 10 columns as follow: "),
+                                            dbc.Table(
+                                                id='meteorites-dataset',
+                                                children=[
+                                                    html.Thead(html.Tr(
+                                                        [html.Th("Column name"), html.Th("Description"),
+                                                         html.Th("Type")])),
+                                                    html.Tbody([
+                                                        html.Tr(
+                                                            [html.Td('name'), html.Td('Name giver to the meteorite'),
                                                              html.Td('Text')]),
-                                                    html.Tr([html.Td('Mass (g)'), html.Td('Mass in gram'), html.Td('Number')]),
-                                                    html.Tr([html.Td('fall'), html.Td('Fell: meteorite observed falling / Found: meteorite found after, not observed'), html.Td('Text')]),
-                                                    html.Tr([html.Td('year'), html.Td('Year the meteorite fell or has been discovered depending on the field “fall”'), html.Td('Datetime')]),
-                                                    html.Tr([html.Td('reclat'), html.Td('Latitude of the landing'), html.Td('Number')]),
-                                                    html.Tr([html.Td('reclong'), html.Td('Longitde of the landing'), html.Td('Number')]),
-                                                    html.Tr([html.Td('GeoLocation'), html.Td('Coordinates of the landing “(reclat, reclong)”'), html.Td('Tuple')]),
-                                                ])
-                                            ],
-                                            bordered=True,
-                                            dark=True,
-                                            hover=True,
-                                            responsive=True,
-                                            striped=True,
+                                                        html.Tr([html.Td('id'),
+                                                                 html.Td(
+                                                                     'Unique identification number of the meteorite'),
+                                                                 html.Td('Text')]),
+                                                        html.Tr([html.Td('nametype'), html.Td(
+                                                            'Valid: Typical meteorite / Relict: very old, highly degraded'),
+                                                                 html.Td('Text')]),
+                                                        html.Tr([html.Td('recclass'),
+                                                                 html.Td([html.A('Class of the meteorite',
+                                                                                 href='https://en.wikipedia.org/wiki/Meteorite_classification',
+                                                                                 target="_blank")]),
+                                                                 html.Td('Text')]),
+                                                        html.Tr([html.Td('Mass (g)'), html.Td('Mass in gram'),
+                                                                 html.Td('Number')]),
+                                                        html.Tr([html.Td('fall'), html.Td(
+                                                            'Fell: meteorite observed falling / Found: meteorite found after, not observed'),
+                                                                 html.Td('Text')]),
+                                                        html.Tr([html.Td('year'), html.Td(
+                                                            'Year the meteorite fell or has been discovered depending on the field “fall”'),
+                                                                 html.Td('Datetime')]),
+                                                        html.Tr([html.Td('reclat'), html.Td('Latitude of the landing'),
+                                                                 html.Td('Number')]),
+                                                        html.Tr([html.Td('reclong'), html.Td('Longitde of the landing'),
+                                                                 html.Td('Number')]),
+                                                        html.Tr([html.Td('GeoLocation'),
+                                                                 html.Td(
+                                                                     'Coordinates of the landing “(reclat, reclong)”'),
+                                                                 html.Td('Tuple')]),
+                                                    ])
+                                                ],
+                                                bordered=True,
+                                                dark=True,
+                                                hover=True,
+                                                responsive=True,
+                                                striped=True,
+                                            ),
+                                            html.H3("Country data"),
+                                            html.A("Link to the dataset",
+                                                   href='https://www.kaggle.com/fernandol/countries-of-the-world',
+                                                   target="_blank"),
+                                            html.P(
+                                                "It is extracted from The World Factbook, Central Intelligence Agency , compiling data from all countries. It is composed of 227 rows, and I filtered only 7 columns as follow:"),
+                                            dbc.Table(
+                                                id='country-dataset',
+                                                children=[
+                                                    html.Thead(html.Tr(
+                                                        [html.Th("Column name"), html.Th("Description"),
+                                                         html.Th("Type")])),
+                                                    html.Tbody([
+                                                        html.Tr([html.Td('Country'), html.Td('Name of the country'),
+                                                                 html.Td('Text')]),
+                                                        html.Tr([html.Td('Region'), html.Td(
+                                                            'Region name in: Baltics, eastern europe, western europe, asia (ex. near east), c.w. of ind. States, oceania, northern america, latin amer. & carib, northern africa, near east, sub-saharan africa, antarctica'),
+                                                                 html.Td('Text')]),
+                                                        html.Tr(
+                                                            [html.Td('Population'), html.Td('Number of inhabitants'),
+                                                             html.Td('Number')]),
+                                                        html.Tr([html.Td('Area (km sq)'), html.Td('Area in km square'),
+                                                                 html.Td('Number')]),
+                                                        html.Tr([html.Td('Pop. Density'), html.Td(
+                                                            'Population density in Pop./km sq (Population/Area)'),
+                                                                 html.Td('Number')]),
+                                                        html.Tr([html.Td('GPD ($ per capita)'), html.Td(
+                                                            'Gross Domestic Product/ Population, useful to see how rich a country is.'),
+                                                                 html.Td('Number')]),
+                                                        html.Tr([html.Td('Climate'), html.Td(
+                                                            'Climate type in: Desert(ice or sand), Desert/Tropical, Tropical, Tropical/Temperate, Temperate, Other'),
+                                                                 html.Td('Text')]),
+                                                    ])
+                                                ],
+                                                bordered=True,
+                                                dark=True,
+                                                hover=True,
+                                                responsive=True,
+                                                striped=True,
+                                            )
+                                        ]),
+                                        dbc.ModalFooter(
+                                            dbc.Button("Close", id="close-modal", className="ml-2")
                                         ),
-                                        html.H3("Country data"),
-                                        html.A("Link to the dataset", href='https://www.kaggle.com/fernandol/countries-of-the-world', target="_blank"),
-                                        html.P(
-                                            "It is extracted from The World Factbook, Central Intelligence Agency , compiling data from all countries. It is composed of 227 rows, and I filtered only 7 columns as follow:"),
-                                        dbc.Table(
-                                            id='country-dataset',
-                                            children=[
-                                                html.Thead(html.Tr([html.Th("Column name"), html.Th("Description"), html.Th("Type")])),
-                                                html.Tbody([
-                                                    html.Tr([html.Td('Country'), html.Td('Name of the country'), html.Td('Text')]),
-                                                    html.Tr([html.Td('Region'), html.Td(
-                                                        'Region name in: Baltics, eastern europe, western europe, asia (ex. near east), c.w. of ind. States, oceania, northern america, latin amer. & carib, northern africa, near east, sub-saharan africa, antarctica'),
-                                                             html.Td('Text')]),
-                                                    html.Tr([html.Td('Population'), html.Td('Number of inhabitants'), html.Td('Number')]),
-                                                    html.Tr([html.Td('Area (km sq)'), html.Td('Area in km square'), html.Td('Number')]),
-                                                    html.Tr([html.Td('Pop. Density'), html.Td('Population density in Pop./km sq (Population/Area)'), html.Td('Number')]),
-                                                    html.Tr([html.Td('GPD ($ per capita)'), html.Td('Gross Domestic Product/ Population, useful to see how rich a country is.'), html.Td('Number')]),
-                                                    html.Tr([html.Td('Climate'), html.Td('Climate type in: Desert(ice or sand), Desert/Tropical, Tropical, Tropical/Temperate, Temperate, Other'), html.Td('Text')]),
-                                                ])
-                                            ],
-                                            bordered=True,
-                                            dark=True,
-                                            hover=True,
-                                            responsive=True,
-                                            striped=True,
-                                        )
-                                    ]),
-                                    dbc.ModalFooter(
-                                        dbc.Button("Close", id="close-modal", className="ml-2")
-                                    ),
-                                ],
-                                id="modal",
-                                size='xl',
-                            )],
-                            width="auto",
-                        ),
-                    ],
-                    no_gutters=True,
-                    className="ml-auto flex-nowrap mt-3 mt-md-0",
-                    align="center",
-                )
+                                    ],
+                                    id="modal",
+                                    size='xl',
+                                )],
+                                width="auto",
+                            ),
+                        ],
+                        className="ml-auto flex-nowrap mt-3 mt-md-0",
+                        align="center",
+                    ),
+                    width=1),
             ],
             color="dark",
             dark=True,
@@ -133,49 +181,50 @@ app.layout = html.Div(
                                                 dbc.Row(
                                                     children=[
                                                         dbc.Col([
-                                                            dbc.FormGroup(
-                                                                children=[
-                                                                    dcc.RangeSlider(
-                                                                        id='year-range-slider',
-                                                                        min=df['year'].min(),
-                                                                        max=df['year'].max(),
-                                                                        step=1,
-                                                                        value=[df['year'].min(), df['year'].max()],
-                                                                        updatemode='mouseup',
-                                                                        pushable=True,
-                                                                        tooltip=dict(
-                                                                            always_visible=True,
-                                                                        )
-                                                                    ),
-                                                                    dbc.Label(
-                                                                        "Filter by discovery year (or select range on the Landing/Year graph)",
-                                                                        html_for='year-range-slider'),
-                                                                ]),
+                                                            dcc.RangeSlider(
+                                                                id='year-range-slider',
+                                                                min=df['year'].min(),
+                                                                max=df['year'].max(),
+                                                                step=1,
+                                                                value=[df['year'].min(), df['year'].max()],
+                                                                marks=None,
+                                                                # marks={
+                                                                #     df['year'].min(): f'{df["year"].min()}',
+                                                                #     (df['year'].min()+df['year'].max())//2: f'{(df["year"].min()+df["year"].max())//2}',
+                                                                #     df['year'].max(): f'{df["year"].max()}'
+                                                                # },
+                                                                updatemode='mouseup',
+                                                                pushable=True,
+                                                                tooltip=dict(
+                                                                    always_visible=True,
+                                                                )
+                                                            ),
+                                                            dbc.Label(
+                                                                "Filter by discovery year (or select range on the Landing/Year graph)",
+                                                                html_for='year-range-slider'),
                                                         ],
                                                             align='center',
                                                         ),
-                                                        dbc.Col(
-                                                            dbc.FormGroup(
-                                                                children=[
-                                                                    dbc.Label("Select the type of meteorites"),
-                                                                    dbc.Checklist(
-                                                                        id='seen-found-check',
-                                                                        options=[
-                                                                            {'label': 'Found', 'value': 'Found'},
-                                                                            {'label': 'Seen', 'value': 'Fell'},
-                                                                        ],
-                                                                        value=['Found', 'Fell'],
-                                                                        inline=False,
-                                                                    ),
+                                                        dbc.Col([
+                                                            dbc.Label("Select the type of meteorites"),
+                                                            dbc.Checklist(
+                                                                id='seen-found-check',
+                                                                options=[
+                                                                    {'label': 'Found', 'value': 'Found'},
+                                                                    {'label': 'Seen', 'value': 'Fell'},
                                                                 ],
-                                                            )
+                                                                value=['Found', 'Fell'],
+                                                                inline=False,
+                                                            ),
+                                                        ]
                                                         ),
                                                         dbc.Col([
                                                             dbc.Label("Type of map"),
                                                             dbc.RadioItems(
                                                                 options=[
                                                                     {"label": "Dark mode", "value": 'dark'},
-                                                                    {"label": "Topographic map", "value": 'stamen-terrain'},
+                                                                    {"label": "Topographic map",
+                                                                     "value": 'stamen-terrain'},
                                                                 ],
                                                                 value='dark',
                                                                 id="type-map",
@@ -191,7 +240,7 @@ app.layout = html.Div(
                                         )
                                     ]
                                 ),
-                            ]),
+                            ], width=6),
                         dbc.Col(
                             id="right-column",
                             align='center',
@@ -239,7 +288,7 @@ app.layout = html.Div(
                                     ]),
 
                             ],
-                        ),
+                            width=6),
                     ]),
                 dbc.Row(
                     dbc.Col(
@@ -256,8 +305,8 @@ app.layout = html.Div(
                                 'marginTop': '5px'
                             }
 
-                        ),
-                    ),
+                        )
+                        , width=12),
                 )
             ])
     ])
