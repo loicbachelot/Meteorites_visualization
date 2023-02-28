@@ -5,6 +5,6 @@ The data are the meteorites landing data coming from the NASA open data: https:/
 
 In this repos you will find the notebooks I used for the visualization and the dash app.
 
-The dashboard is deployed here: https://meteorite-lb.herokuapp.com/ 
+The dashboard is deployed here: https://meteorite-lb.herokuapp.com/ (no longuer running due to stop of the free plans)
 
 ![](images/dashboard.png)
